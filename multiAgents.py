@@ -153,6 +153,73 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
     Your minimax agent (question 2)
     """
+    '''
+    def graphExpansion(self, depth, currAgent, numAgents, gameState):
+        if depth == self.depth:
+            print(self.evaluationFunction(gameState))
+            return self.evaluationFunction(gameState)
+
+        if currAgent > numAgents:
+            return self.graphExpansion(depth+1, 0, numAgents, gameState)
+
+        if currAgent == 0:
+            maxScore = 0
+            for action in gameState.getLegalActions(0):
+                next = gameState.generateSuccessor(0, action)
+                if next.isLose():
+                    continue
+                score = self.graphExpansion(depth, currAgent+1, numAgents, next)
+                if maxScore < score:
+                    maxScore = score
+            return maxScore
+        else:
+            minScore = 99999
+            for action in gameState.getLegalActions(0):
+                next = gameState.generateSuccessor(0, action)
+                score = self.graphExpansion(depth, currAgent+1, numAgents, next)
+                if minScore == None or minScore > score:
+                    minScore = score
+            return minScore
+    '''
+
+    def maxValue(self, gameState, depth):
+        if depth == 0 or gameState.isWin() or gameState.isLose():
+            score = self.evaluationFunction(gameState)
+            return score, None
+
+
+        maxScore, bestAction = -2**64, Directions.STOP
+        for action in gameState.getLegalActions():
+            newGameState = gameState.generateSuccessor(0, action)
+            curScore = self.minValue(newGameState, 1, depth)
+            if maxScore < curScore:
+                maxScore = curScore
+                bestAction = action
+
+        return maxScore, bestAction
+
+
+    def minValue(self, gameState, ghost, depth):
+        if gameState.isWin() or gameState.isLose() or ghost>=gameState.getNumAgents():
+            return self.evaluationFunction(gameState)
+
+        minScore = 2**63
+        validActions = gameState.getLegalActions(ghost)
+
+        for action in validActions:
+            nextGameState = gameState.generateSuccessor(ghost, action)
+            if ghost==gameState.getNumAgents()-1:
+                if depth==1:
+                    curScore = self.evaluationFunction(nextGameState)
+                else:
+                    curScore, _ = self.maxValue(nextGameState, depth-1)
+            else:
+                curScore = self.minValue(nextGameState, ghost+1, depth)
+            
+            if curScore < minScore:
+                minScore = curScore
+
+        return minScore
 
     def getAction(self, gameState):
         """
@@ -178,7 +245,26 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        '''
+            maxScore = 0
+            maxAction = None
+    
+            for action in gameState.getLegalActions(0):
+                print("enter")
+                score = self.graphExpansion(0, 1, gameState.getNumAgents(), gameState.generateSuccessor(0, action))
+                print(score)
+                if score >= maxScore:
+                    maxAction = action
+                    maxScore = score
+    
+            print(maxScore)
+    
+            return maxAction
+        '''
+
+        score, action = self.maxValue(gameState, self.depth)
+
+        return action
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
