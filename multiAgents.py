@@ -86,11 +86,11 @@ class ReflexAgent(Agent):
         newFoodList = newFood.asList()
         score = 0
 
-        action_score = {'South':0,
-                        'North':0,
-                        'East':0,
-                        'West':0,
-                        'Stop':-100000}
+        action_score = {Directions.SOUTH:0,
+                        Directions.NORTH:0,
+                        Directions.EAST:0,
+                        Directions.WEST:0,
+                        Directions.STOP:-100000}
 
         if len(newFoodList) == currentGameState.getFood().count():
             mindist = 2**64
@@ -196,6 +196,46 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
+    def maxValue(self, gameState, depth):
+        if depth == 0 or gameState.isWin() or gameState.isLose():
+            score = self.evaluationFunction(gameState)
+            return score, None
+        
+
+        maxScore, bestAction = -2**64, Directions.STOP
+        for action in gameState.getLegalActions():
+            newGameState = gameState.generateSuccessor(0, action)
+            curScore = self.expValue(newGameState, 1, depth)
+            
+            if maxScore < curScore:
+                maxScore = curScore
+                bestAction = action
+        
+        return maxScore, bestAction
+
+
+    def expValue(self, gameState, ghost, depth):
+        if gameState.isWin() or gameState.isLose() or ghost==gameState.getNumAgents():
+            return self.evaluationFunction(gameState)
+
+        expectedScore = 0
+        validActions = gameState.getLegalActions(ghost)
+
+        for action in validActions:
+            nextGameState = gameState.generateSuccessor(ghost, action)
+            if ghost==gameState.getNumAgents()-1:
+                if depth==1:
+                    curScore = self.evaluationFunction(nextGameState)
+                else:
+                    curScore, _ = self.maxValue(nextGameState, depth-1)
+            else:
+                curScore = self.expValue(nextGameState, ghost+1, depth)
+            expectedScore += curScore/len(validActions)
+        
+        return expectedScore
+
+
+
 
     def getAction(self, gameState):
         """
@@ -205,7 +245,9 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        _, action = self.maxValue(gameState, self.depth)
+        return action
+        
 
 def betterEvaluationFunction(currentGameState):
     """
