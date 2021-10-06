@@ -16,6 +16,7 @@ from util import manhattanDistance
 from game import Directions
 import random, util
 
+
 from game import Agent
 
 class ReflexAgent(Agent):
@@ -74,7 +75,49 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+
+        # print('successorGameState: ', successorGameState)
+        # print('newPos: ', newPos)
+        # print('newFood: ', newFood)
+        # print('newScaredTimes: ', newScaredTimes)
+        # print('ghost position: ', newGhostStates[0].getPosition())
+        # print('ghost direction: ', newGhostStates[0].getDirection())
+
+        newFoodList = newFood.asList()
+        score = 0
+
+        action_score = {'South':0,
+                        'North':0,
+                        'East':0,
+                        'West':0,
+                        'Stop':-100000}
+
+        if len(newFoodList) == currentGameState.getFood().count():
+            mindist = 2**64
+            for foodPos in newFoodList:
+                mindist = min(mindist, util.manhattanDistance(foodPos, newPos))
+            score += 300.0/(mindist*min(3,len(newFoodList))) + action_score[action]
+        else:
+            score = 301
+
+        ghostScore = 0
+        for ghostState in newGhostStates:
+            dist = util.manhattanDistance(ghostState.getPosition(), newPos)
+            ghostScore += 4**(6 - min(6, dist))
+        
+        # print('Action- ', action)
+        # print('Current pos - ', currentGameState.getPacmanPosition())
+        # print('score', score, len(newFoodList))
+        if ghostScore == len(newGhostStates):
+            score *= 1000
+        else:
+            score -= ghostScore
+
+        
+
+        # print(ghostScore)
+        return score
+        # return successorGameState.getScore()
 
 def scoreEvaluationFunction(currentGameState):
     """
