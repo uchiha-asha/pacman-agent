@@ -117,6 +117,8 @@ class ReflexAgent(Agent):
                     ghostScore += 10000000/dist
                 else:
                     ghostScore -= 10000000/dist
+            if dist==0:
+                print(dist)
                   
         
         score -= ghostScore
@@ -291,13 +293,11 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             score = self.evaluationFunction(gameState)
             return score, None
         
-
-        maxScore, bestAction = -2**64, Directions.STOP
+        maxScore, bestAction = -2**128, None
         for action in gameState.getLegalActions():
             newGameState = gameState.generateSuccessor(0, action)
             curScore = self.expValue(newGameState, 1, depth)
-            
-            if maxScore < curScore:
+            if maxScore <= curScore:
                 maxScore = curScore
                 bestAction = action
         
@@ -335,9 +335,36 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        _, action = self.maxValue(gameState, self.depth)
+        maxScore, action = self.maxValue(gameState, self.depth)
         return action
         
+
+def bfs(currentGameState):
+    q = util.Queue()
+    x,y = currentGameState.getPacmanPosition()
+    q.push((x,y))
+    walls = currentGameState.getWalls()
+    n, m = walls.height+1, walls.width+1
+
+    inf, mindistToFood = 1e9, 1e9
+    dist = [[inf for j in range(n)] for i in range(m)]
+    dist[x][y] = 0
+
+    delta = [(0,1), (1,0), (0,-1), (-1,0)]
+
+    while not q.isEmpty():
+        curx, cury = q.pop()
+        if currentGameState.hasFood(curx, cury):
+            mindistToFood = min(mindistToFood, dist[curx][cury])
+        for (dx, dy) in delta:
+            nextx, nexty = curx+dx, cury+dy
+            if walls[nextx][nexty] == False:
+                if dist[nextx][nexty] == inf:
+                    dist[nextx][nexty] = dist[curx][cury]+1
+                    q.push((nextx, nexty))
+
+    return mindistToFood, dist
+
 
 def betterEvaluationFunction(currentGameState):
     """
@@ -347,7 +374,36 @@ def betterEvaluationFunction(currentGameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    inf = 1e9
+    mindistToFood, dist = bfs(currentGameState)
+    if currentGameState.isWin():
+        score = inf
+    elif currentGameState.isLose():
+        score = -2**50
+    else:
+        score = 1/mindistToFood - currentGameState.getFood().count()
+
+    capsuleList = currentGameState.getCapsules()
+    
+    mindistToCapsule = inf
+    for (x,y) in capsuleList:
+        mindistToCapsule = min(mindistToCapsule, dist[x][y])
+    
+    # score += 3/(len(capsuleList)+1)
+
+    ghostScore = 0
+    ghostNum = len(currentGameState.getGhostStates())
+    for ghostState in currentGameState.getGhostStates():
+        ghostPos = ghostState.getPosition()
+        distGhost = dist[int(ghostPos[0])][int(ghostPos[1])]
+        scared = ghostState.scaredTimer
+        
+        if scared > distGhost and distGhost<20:
+            ghostScore -= 10000/(distGhost+1) 
+
+    score -= ghostScore
+
+    return  score - currentGameState.getFood().count() 
 
 # Abbreviation
 better = betterEvaluationFunction
