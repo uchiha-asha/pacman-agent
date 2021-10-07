@@ -276,13 +276,64 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
     """
+    def maxValue(self, gameState, depth, alpha, beta):
+        if depth == 0 or gameState.isWin() or gameState.isLose():
+            score = self.evaluationFunction(gameState)
+            return score, None
+
+
+        maxScore, bestAction = -2**64, Directions.STOP
+        for action in gameState.getLegalActions():
+            newGameState = gameState.generateSuccessor(0, action)
+            curScore = self.minValue(newGameState, 1, depth, alpha, beta)
+            if maxScore < curScore:
+                maxScore = curScore
+                bestAction = action
+
+            if curScore > beta:
+                return curScore, Directions.STOP
+
+            alpha = max(alpha, curScore)
+
+        return maxScore, bestAction
+
+
+    def minValue(self, gameState, ghost, depth, alpha, beta):
+        if gameState.isWin() or gameState.isLose() or ghost>=gameState.getNumAgents():
+            return self.evaluationFunction(gameState)
+
+        minScore = 2**63
+        validActions = gameState.getLegalActions(ghost)
+
+        for action in validActions:
+            nextGameState = gameState.generateSuccessor(ghost, action)
+            if ghost==gameState.getNumAgents()-1:
+                if depth==1:
+                    curScore = self.evaluationFunction(nextGameState)
+                else:
+                    curScore, _ = self.maxValue(nextGameState, depth-1, alpha, beta)
+            else:
+                curScore = self.minValue(nextGameState, ghost+1, depth, alpha, beta)
+            
+            if curScore < minScore:
+                minScore = curScore
+
+            if curScore < alpha:
+                return curScore
+
+            beta = min(beta, curScore)
+
+
+        return minScore
 
     def getAction(self, gameState):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        _, action = self.maxValue(gameState, self.depth, -2**64, 2**63)
+
+        return action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
