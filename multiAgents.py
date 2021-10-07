@@ -387,6 +387,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         maxScore, action = self.maxValue(gameState, self.depth)
+        # print(maxScore, action)
         return action
         
 
@@ -444,17 +445,24 @@ def betterEvaluationFunction(currentGameState):
 
     ghostScore = 0
     ghostNum = len(currentGameState.getGhostStates())
+
+    pacmanDrugged, mindistToGhost = False, inf
     for ghostState in currentGameState.getGhostStates():
         ghostPos = ghostState.getPosition()
-        distGhost = dist[int(ghostPos[0])][int(ghostPos[1])]
+        distGhost = dist[int(ghostPos[0])][int(ghostPos[1])] + 1
+        mindistToGhost = min(mindistToGhost, distGhost)
         scared = ghostState.scaredTimer
-        
+        if scared > 0:
+            pacmanDrugged = True
         if scared > distGhost and distGhost<20:
-            ghostScore -= 10000/(distGhost+1) 
+            ghostScore -= 1000000/distGhost**2
+
+    if not pacmanDrugged and mindistToGhost<15 and len(capsuleList) > 0:
+        score += 20*(1/mindistToCapsule + 1/mindistToGhost)
 
     score -= ghostScore
 
-    return  score - currentGameState.getFood().count() 
+    return  score 
 
 # Abbreviation
 better = betterEvaluationFunction
