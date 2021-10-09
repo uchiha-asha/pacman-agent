@@ -272,6 +272,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
         return action
 
+
+
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
@@ -335,6 +337,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
         return action
 
+
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
@@ -345,13 +348,21 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             return score, None
         
         maxScore, bestAction = -2**128, None
+        win, winMove = False, None
+        # print('start')
         for action in gameState.getLegalActions():
             newGameState = gameState.generateSuccessor(0, action)
             curScore = self.expValue(newGameState, 1, depth)
-            if maxScore <= curScore:
+            if newGameState.isWin() and not win:
+                win, winMove = True, action
+                
+            # print(maxScore, action)
+            if maxScore < curScore:
                 maxScore = curScore
                 bestAction = action
         
+        # if win:
+        #     return maxScore, winMove
         return maxScore, bestAction
 
 
@@ -376,8 +387,6 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         return expectedScore
 
 
-
-
     def getAction(self, gameState):
         """
         Returns the expectimax action using self.depth and self.evaluationFunction
@@ -389,6 +398,12 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         maxScore, action = self.maxValue(gameState, self.depth)
         # print(maxScore, action)
         return action
+
+
+
+      
+        
+
         
 
 def bfs(currentGameState):
@@ -457,9 +472,13 @@ def betterEvaluationFunction(currentGameState):
         if scared > distGhost and distGhost<20:
             ghostScore -= 1000000/distGhost**2
 
-    if not pacmanDrugged and mindistToGhost<15 and len(capsuleList) > 0:
-        score += 20*(1/mindistToCapsule + 1/mindistToGhost)
+    if not pacmanDrugged and mindistToGhost<20:
+        if len(capsuleList) > 0:
+            score += 20*(1/mindistToCapsule + 1/mindistToGhost)
 
+    score += currentGameState.getScore()
+        
+   
     score -= ghostScore
 
     return  score 
